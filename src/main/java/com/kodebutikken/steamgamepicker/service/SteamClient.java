@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -45,24 +46,36 @@ public class SteamClient {
     }
 
     public List<SteamStoreGame> getSteamLibrary() {
-        SteamApiResponse apiResponse = client.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/IStoreService/GetAppList/v1/")
-                        .queryParam("key", apiKey)
-                        .build())
-                .retrieve()
-                .body(SteamApiResponse.class);
+        List<SteamStoreGame> result = new ArrayList<>();
+        int lastAppId = 0;
+        boolean more = true;
 
-        if (apiResponse == null || apiResponse.response() == null || apiResponse.response().games() == null) {
-            return List.of();
+        while (more) {
+            final int from = lastAppId;
+            AppListResponse apiResponse = client.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/IStoreService/GetAppList/v1/")
+                            .queryParam("key", apiKey)
+                            .queryParam("max_results", 50000)
+                            .queryParam("last_appid", from)
+                            .build())
+                    .retrieve()
+                    .body(AppListResponse.class);
+
+            if (apiResponse == null || apiResponse.response() == null || apiResponse.response().apps() == null) {
+                break;
+            }
+
+            AppListData data = apiResponse.response();
+            for (AppDto app : data.apps()) {
+                result.add(new SteamStoreGame(app.appid(), app.name()));
+            }
+
+            more = Boolean.TRUE.equals(data.have_more_results());
+            lastAppId = data.last_appid() == null ? 0 : data.last_appid();
         }
 
-        return apiResponse.response().games().stream()
-                .map(g -> new SteamStoreGame(
-                        g.appId(),
-                        g.name()
-                ))
-                .toList();
+        return result;
     }
 
     //public List<DetailedSteamStoreGame>
@@ -86,4 +99,8 @@ public class SteamClient {
 
     public record DetailedSteamStoreGame(int appId, String name, String shortDescription, List<Categories> categories,
                                          PriceOverview priceOverview, List<Genres> genres, boolean isFree){}
+
+    public record AppListResponse(AppListData response) {}
+    public record AppListData(List<AppDto> apps, Boolean have_more_results, Integer last_appid) {}
+    public record AppDto(int appid, String name) {}
 }
