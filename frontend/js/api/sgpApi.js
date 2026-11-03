@@ -45,6 +45,13 @@ async function request(endpoint, options = {}) {
     }
 }
 
+export function sendChat(steamId, message, history) {
+    return request("/chat", {
+        method: "POST",
+        body: JSON.stringify({ steamId, message, history }),
+    });
+}
+
 export async function fetchGames() {
     return await request("/games");
 }
