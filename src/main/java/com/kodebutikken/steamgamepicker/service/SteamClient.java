@@ -1,5 +1,7 @@
 package com.kodebutikken.steamgamepicker.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -82,6 +84,37 @@ public class SteamClient {
     }
 
     //public List<DetailedSteamStoreGame>
+
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record AppListEntry(
+            @JsonProperty("appid") long appId,
+            String name,
+            @JsonProperty("last_modified") long lastModified,
+            @JsonProperty("price_change_number") long priceChangeNumber) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record AppDetailsEnvelope(boolean success, AppDetails data) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record AppDetails(
+            String type,
+            String name,
+            @JsonProperty("steam_appid") long appId,
+            @JsonProperty("is_free") boolean isFree,
+            @JsonProperty("short_description") String shortDescription,
+            @JsonProperty("header_image") String headerImage,
+            List<String> developers,
+            List<String> publishers,
+            List<Tag> genres,
+            List<Tag> categories,
+            @JsonProperty("release_date") ReleaseDate releaseDate,
+            Recommendations recommendations) {
+        record Tag(String id, String description) {}
+        record ReleaseDate(@JsonProperty("coming_soon") boolean comingSoon, String date) {}
+        record Recommendations(int total) {}
+    }
+
 
 
     public record SteamApiResponse(ResponseData response) {}
