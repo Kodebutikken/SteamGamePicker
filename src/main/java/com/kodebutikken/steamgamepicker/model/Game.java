@@ -1,24 +1,27 @@
 package com.kodebutikken.steamgamepicker.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Set;
 
-@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class Game {
-    @Id private long appId;
+    private long appId;
     private String name;
+    private Long lastModified;
+    private Long priceChangeNumber;
     private String type;
-    @Column(length = 2000) private String shortDescription;
+    private String shortDescription;
     private boolean isFree;
     private String headerImage;
     private String releaseDate;
     private Integer recommendations;
 
-    @ElementCollection private Set<String> genres;
-    @ElementCollection private Set<String> categories;
-    @ElementCollection private Set<String> developers;
+    private Set<String> genres;
+    private Set<String> categories;
+    private Set<String> developers;
 }
