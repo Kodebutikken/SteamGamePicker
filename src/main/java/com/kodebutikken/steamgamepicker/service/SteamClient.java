@@ -1,6 +1,7 @@
 package com.kodebutikken.steamgamepicker.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -21,6 +22,7 @@ public class SteamClient {
                 .build();
     }
 
+    @Cacheable (value ="ownedGames", unless ="#result.isEmpty()")
     public List<OwnSteamGame> getOwnedGames(String steam64Id) {
         SteamApiResponse apiResponse = client.get()
                 .uri(uriBuilder -> uriBuilder
@@ -45,6 +47,7 @@ public class SteamClient {
                 .toList();
     }
 
+    @Cacheable(value = "appList", unless = "#result.isEmpty()")
     public List<SteamStoreGame> getSteamLibrary() {
         List<SteamStoreGame> result = new ArrayList<>();
         int lastAppId = 0;
