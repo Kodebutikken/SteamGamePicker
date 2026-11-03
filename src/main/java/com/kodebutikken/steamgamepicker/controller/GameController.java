@@ -31,7 +31,7 @@ public class GameController {
             @RequestBody GameRecommendationService.RecommendationRequest request) {
 
         if (request.steamId() == null || request.steamId().isBlank()) {
-            return ResponseEntity.badRequest().build();  // 400 hvis SteamID mangler
+            return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(
                 recommendationService.getRecommendations(request.steamId(), request.query()));
