@@ -1,5 +1,6 @@
 package com.kodebutikken.steamgamepicker.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -83,8 +84,7 @@ public class SteamClient {
 
     public record SteamApiResponse(ResponseData response) {}
     public record ResponseData(List<GameDto> games) {}
-    public record GameDto(int appId, String name, int playtime_forever) {}
-
+    public record GameDto(@JsonProperty("appid") int appId, String name, int playtime_forever) {}
     public record OwnSteamGame(String name, int playtimeHours) {}
 
     public record SteamStoreGame(int appId, String name){}
