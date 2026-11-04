@@ -2,6 +2,7 @@ package com.kodebutikken.steamgamepicker.service;
 
 import com.kodebutikken.steamgamepicker.dto.SteamDtos.*;
 import com.kodebutikken.steamgamepicker.model.OwnedGame;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
