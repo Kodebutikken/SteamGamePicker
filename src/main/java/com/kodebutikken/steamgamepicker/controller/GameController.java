@@ -32,7 +32,7 @@ public class GameController {
     public ResponseEntity<List<OwnedGame>> getOwnedGames(String steam64Id) {
         return ResponseEntity.ok(steamClient.getOwnedGames(steam64Id));
     }
-}
+
     @PostMapping("/api/recommendations")
     public ResponseEntity<GameRecommendationService.RecommendationResponse> recommend(
             @RequestBody GameRecommendationService.RecommendationRequest request) {
@@ -44,3 +44,4 @@ public class GameController {
                 recommendationService.getRecommendations(request.steamId(), request.query()));
     }
 }
+

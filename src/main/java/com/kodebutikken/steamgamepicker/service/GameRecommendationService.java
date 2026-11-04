@@ -1,5 +1,7 @@
 package com.kodebutikken.steamgamepicker.service;
 
+import com.kodebutikken.steamgamepicker.dto.SteamDtos;
+import com.kodebutikken.steamgamepicker.model.OwnedGame;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
@@ -26,16 +28,16 @@ public class GameRecommendationService {
     }
 
     public RecommendationResponse getRecommendations(String steam64Id, String userQuery) {
-        List<SteamClient.OwnSteamGame> ownedGames = steamClient.getOwnedGames(steam64Id);
+        List<OwnedGame> ownedGames = steamClient.getOwnedGames(steam64Id);
 
         if (ownedGames.isEmpty()) {
             return new RecommendationResponse(List.of());
         }
 
         String gamesContext = ownedGames.stream()
-                .sorted(Comparator.comparingInt(SteamClient.OwnSteamGame::playtimeHours).reversed())
+                .sorted(Comparator.comparingInt(OwnedGame::playtimeForever).reversed())
                 .limit(100)
-                .map(g -> "- " + g.name() + " (" + g.playtimeHours() + " hours)")
+                .map(g -> "- " + g.name() + " (" + g.playtimeForever() + " hours)")
                 .collect(Collectors.joining("\n"));
 
         String query = (userQuery == null || userQuery.isBlank()) ? "No special request" : userQuery.strip();
