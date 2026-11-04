@@ -1,0 +1,62 @@
+* { box-sizing: border-box; }
+body {
+    margin: 0; font-family: system-ui, sans-serif;
+    background: #171a21; color: #c7d5e0;          /* Steam-agtige farver */
+}
+.app { max-width: 760px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 16px; }
+header { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+h1 { font-size: 1.4rem; margin: 0; color: #fff; }
+input { padding: 10px; border-radius: 6px; border: 1px solid #2a475e; background: #1b2838; color: #fff; }
+
+#app { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.chat { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+nav a { color: #66c0f4; text-decoration: none; }
+
+#messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 16px 0; }
+.msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; line-height: 1.4; white-space: pre-wrap; }
+.msg.user { align-self: flex-end; background: #66c0f4; color: #0b1a26; }
+.msg.bot  { align-self: flex-start; background: #2a475e; }
+.msg.loading { opacity: .6; font-style: italic; }
+
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; align-self: stretch; }
+.game { background: #1b2838; border-radius: 8px; overflow: hidden; text-decoration: none; color: inherit; }
+.game img { width: 100%; display: block; }
+.game div { padding: 8px 10px; font-size: .9rem; }
+.game strong { color: #fff; display: block; }
+
+button { padding: 10px 18px; border: 0; border-radius: 6px; background: #66c0f4; color: #0b1a26; font-weight: 600;
+    cursor: pointer; }
+button:disabled { opacity: .5; cursor: wait; }
+
+/* Skrivefeltet som én boks: tekstfelt øverst, Steam-ID og Send under */
+#chatForm {
+    display: flex; flex-direction: column; gap: 10px;
+    background: #1b2838; border: 1px solid #2a475e; border-radius: 16px; padding: 12px;
+}
+#chatForm:focus-within { border-color: #66c0f4; }
+#messageInput { border: 0; background: transparent; font-size: 1rem; padding: 6px 4px; outline: none; }
+.composer-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+#steamId { width: 200px; font-size: .85rem; padding: 6px 10px; }
+
+/* Velkomstskærm */
+.welcome { text-align: center; margin-bottom: 12px; }
+.welcome h2 { margin: 0 0 6px; font-size: 2.2rem; font-weight: 600; color: #fff; }
+.welcome p { margin: 0; }
+.suggestions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.suggestions button {
+    background: transparent; color: #c7d5e0; border: 1px solid #2a475e;
+    border-radius: 999px; padding: 6px 14px; font-weight: 400;
+}
+.suggestions button:hover { border-color: #66c0f4; color: #fff; }
+
+/* Før første besked: alt centreret, ingen beskeder */
+.chat.is-empty { justify-content: center; gap: 16px; }
+.chat.is-empty #messages { display: none; }
+
+/* Efter første besked: velkomst og forslag væk, skrivefeltet i bunden */
+.chat:not(.is-empty) .welcome,
+.chat:not(.is-empty) .suggestions { display: none; }
+
+/* Blød overgang, når chatten dukker op */
+.chat:not(.is-empty) #messages { animation: fade-in .25s ease-out; }
+@keyframes fade-in { from { opacity: 0; transform: translateY(8px); } }

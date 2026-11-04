@@ -1,5 +1,7 @@
 package com.kodebutikken.steamgamepicker.controller;
 
+import com.kodebutikken.steamgamepicker.dto.SteamDtos;
+import com.kodebutikken.steamgamepicker.model.OwnedGame;
 import com.kodebutikken.steamgamepicker.service.GameRecommendationService;
 import com.kodebutikken.steamgamepicker.service.SteamClient;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +24,13 @@ public class GameController {
     }
 
     @GetMapping("/api/games")
-    public ResponseEntity<List<SteamClient.SteamStoreGame>> getSteamGames() {
+    public ResponseEntity<List<SteamDtos.AppListEntry>> getSteamGames() {
         return ResponseEntity.ok(steamClient.getSteamLibrary());
+    }
+
+    @GetMapping("/api/owned-games")
+    public ResponseEntity<List<OwnedGame>> getOwnedGames(String steam64Id) {
+        return ResponseEntity.ok(steamClient.getOwnedGames(steam64Id));
     }
 
     @PostMapping("/api/recommendations")
@@ -37,3 +44,4 @@ public class GameController {
                 recommendationService.getRecommendations(request.steamId(), request.query()));
     }
 }
+

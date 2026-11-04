@@ -1,7 +1,10 @@
 package com.kodebutikken.steamgamepicker.service;
 
+import com.kodebutikken.steamgamepicker.dto.SteamDtos.*;
+import com.kodebutikken.steamgamepicker.model.OwnedGame;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -22,8 +25,8 @@ public class SteamClient {
                 .build();
     }
 
-    public List<OwnSteamGame> getOwnedGames(String steam64Id) {
-        SteamApiResponse apiResponse = client.get()
+    public List<OwnedGame> getOwnedGames(String steam64Id) {
+        OwnedGamesResponse apiResponse = client.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/IPlayerService/GetOwnedGames/v1/")
                         .queryParam("key", apiKey)
@@ -32,27 +35,29 @@ public class SteamClient {
                         .queryParam("include_played_free_games", true)
                         .build())
                 .retrieve()
-                .body(SteamApiResponse.class);
+                .body(OwnedGamesResponse.class);
 
         if (apiResponse == null || apiResponse.response() == null || apiResponse.response().games() == null) {
             return List.of();
         }
 
         return apiResponse.response().games().stream()
-                .map(g -> new OwnSteamGame(
+                .map(g -> new OwnedGame(
+                        g.appId(),
                         g.name(),
-                        g.playtime_forever() / 60
+                        g.playtimeForever()
                 ))
                 .toList();
     }
 
-    public List<SteamStoreGame> getSteamLibrary() {
-        List<SteamStoreGame> result = new ArrayList<>();
-        int lastAppId = 0;
+    @Cacheable(value = "appList", unless = "#result.isEmpty()")
+    public List<AppListEntry> getSteamLibrary() {
+        List<AppListEntry> result = new ArrayList<>();
+        long lastAppId = 0;
         boolean more = true;
 
         while (more) {
-            final int from = lastAppId;
+            final long from = lastAppId;
             AppListResponse apiResponse = client.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/IStoreService/GetAppList/v1/")
@@ -68,39 +73,12 @@ public class SteamClient {
             }
 
             AppListData data = apiResponse.response();
-            for (AppDto app : data.apps()) {
-                result.add(new SteamStoreGame(app.appid(), app.name()));
-            }
+            result.addAll(data.apps());
 
-            more = Boolean.TRUE.equals(data.have_more_results());
-            lastAppId = data.last_appid() == null ? 0 : data.last_appid();
+            more = Boolean.TRUE.equals(data.haveMoreResults()) && data.lastAppId() != null;
+            if (more) lastAppId = data.lastAppId();
         }
 
         return result;
     }
-
-    //public List<DetailedSteamStoreGame>
-
-
-    public record SteamApiResponse(ResponseData response) {}
-    public record ResponseData(List<GameDto> games) {}
-    public record GameDto(@JsonProperty("appid") int appId, String name, int playtime_forever) {}
-    public record OwnSteamGame(String name, int playtimeHours) {}
-
-    public record SteamStoreGame(int appId, String name){}
-
-    public record GameData(DetailedSteamStoreGame detailedSteamStoreGame){}
-
-
-    public record PriceOverview(String finalFormatted){}
-    public record Categories(String description){}
-    public record Genres(String description){}
-    //public record
-
-    public record DetailedSteamStoreGame(int appId, String name, String shortDescription, List<Categories> categories,
-                                         PriceOverview priceOverview, List<Genres> genres, boolean isFree){}
-
-    public record AppListResponse(AppListData response) {}
-    public record AppListData(List<AppDto> apps, Boolean have_more_results, Integer last_appid) {}
-    public record AppDto(int appid, String name) {}
 }
