@@ -45,14 +45,13 @@ async function request(endpoint, options = {}) {
     }
 }
 
-export function sendChat(steamId, message, history) {
-    return request("/chat", {
+export function sendChat(steamId, message) {
+    return request("/recommendations", {
         method: "POST",
-        body: JSON.stringify({ steamId, message, history }),
+        body: JSON.stringify({ steamId, query: message }),
     });
 }
 
 export async function fetchGames() {
     return await request("/games");
 }
-

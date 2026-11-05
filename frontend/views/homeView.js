@@ -1,6 +1,6 @@
 "use strict";
 
-import { sendChat } from "../../../../../../../../../../../IdeaProjects/SteamGamePicker/frontend/api/sgpApi.js";
+import { sendChat } from "../api/sgpApi.js";
 
 export function createHomeView() {
     const root = document.createElement("section");   root.className = "chat is-empty"; // is-empty = velkomstskærm, fjernes ved første besked
@@ -11,9 +11,9 @@ export function createHomeView() {
         </div>
         <div id="messages"></div>
         <form id="chatForm">
-            <input id="messageInput" placeholder="F.eks. et co-op spil til under 100 kr..." autocomplete="off" required>
+            <input id="messageInput" placeholder="F.eks. et co-op spil til under 10 euro..." autocomplete="off" required>
             <div class="composer-row">
-                <input id="steamId" placeholder="Steam64-ID (valgfrit)">
+                <input id="steamId" placeholder="Steam64-ID, fx 7656119..." required>
                 <button type="submit">Send</button>
             </div>
         </form>
@@ -24,7 +24,6 @@ export function createHomeView() {
         </div>
     `;
 
-    // root.querySelector – elementerne er ikke på siden endnu, når funktionen kører
     const messagesEl = root.querySelector("#messages");
     const form = root.querySelector("#chatForm");
     const input = root.querySelector("#messageInput");
@@ -40,7 +39,6 @@ export function createHomeView() {
 
     requestAnimationFrame(() => input.focus());
 
-    const history = []; // samtalen sendes med hver gang, så backenden kan være stateless
 
     function scrollToBottom() {
         messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -62,20 +60,16 @@ export function createHomeView() {
         for (const g of games) {
             const card = document.createElement("a");
             card.className = "game";
-            card.href = `https://store.steampowered.com/app/${g.appId}`;
+            card.href = `https://store.steampowered.com/search/?term=${encodeURIComponent(g.title)}`;
             card.target = "_blank";
             card.rel = "noopener";
 
-            const img = document.createElement("img");
-            img.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appId}/header.jpg`;
-            img.alt = g.name;
-
             const info = document.createElement("div");
             const title = document.createElement("strong");
-            title.textContent = g.name;
-            info.append(title, g.price ?? "", document.createElement("br"), g.reason ?? "");
+            title.textContent = g.title;
+            info.append(title, g.genre ?? "", document.createElement("br"), g.reason ?? "");
 
-            card.append(img, info);
+            card.append(info);
             grid.appendChild(card);
         }
 
@@ -86,7 +80,8 @@ export function createHomeView() {
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const message = input.value.trim();
-        if (!message) return;
+        const steamId = steamIdInput.value.trim();
+        if (!message || !steamId) return;
         root.classList.remove("is-empty");
 
         addMessage(message, "user");
@@ -95,14 +90,17 @@ export function createHomeView() {
         const loading = addMessage("Leder efter spil...", "bot loading");
 
         try {
-            const steamId = steamIdInput.value.trim() || null;
-            const data = await sendChat(steamId, message, history);
+            const data = await sendChat(steamId, message);
 
             loading.remove();
-            addMessage(data.reply, "bot");
-            if (data.games?.length) addGames(data.games);
-
-            history.push({ role: "user", text: message }, { role: "bot", text: data.reply });
+            const games = data?.recommendations ?? [];
+            if (games.length === 0) {
+                addMessage("Jeg kunne ikke finde nogen spil. Tjek at dit Steam64-ID er rigtigt, "
+                    + "og at 'Game details' er sat til offentlig på din Steam-profil.", "bot");
+            } else {
+                addMessage(`Her er ${games.length} spil, jeg tror du vil kunne lide:`, "bot");
+                addGames(games);
+            }
         } catch (error) {
             loading.remove();
             addMessage(`Noget gik galt – prøv igen. (${error.message})`, "bot");
