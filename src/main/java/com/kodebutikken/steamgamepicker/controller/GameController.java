@@ -28,7 +28,7 @@ public class GameController {
     }
 
     @GetMapping("/api/owned-games")
-    public ResponseEntity<List<OwnedGame>> getOwnedGames(String steam64Id) {
+    public ResponseEntity<List<OwnedGame>> getOwnedGames(@RequestParam String steam64Id) {  
         return ResponseEntity.ok(steamClient.getOwnedGames(steam64Id));
     }
 
@@ -37,7 +37,7 @@ public class GameController {
         if (request.steamId() == null || request.steamId().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(
-                recommendationService.getRecommendations(request.steamId(), request.query()));
+        return ResponseEntity.ok(recommendationService.getRecommendations(
+                request.steamId(), request.query(), request.maxPrice()));
     }
 }

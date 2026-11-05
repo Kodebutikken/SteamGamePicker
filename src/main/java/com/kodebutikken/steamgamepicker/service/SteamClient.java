@@ -1,27 +1,35 @@
 package com.kodebutikken.steamgamepicker.service;
 
 import com.kodebutikken.steamgamepicker.dto.SteamDtos.*;
+import com.kodebutikken.steamgamepicker.model.Game;
 import com.kodebutikken.steamgamepicker.model.OwnedGame;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
 public class SteamClient {
 
     private final RestClient client;
+    private final RestClient storeClient;  // NY: store.steampowered.com (ingen nøgle)
     private final String apiKey;
 
     public SteamClient(RestClient.Builder builder, @Value("${steam.api.key}") String apiKey) {
         this.apiKey = apiKey;
-        this.client = builder
+        this.client = builder.clone()
                 .baseUrl("https://api.steampowered.com")
+                .build();
+        this.storeClient = builder.clone()
+                .baseUrl("https://store.steampowered.com")
                 .build();
     }
 
@@ -80,5 +88,46 @@ public class SteamClient {
         }
 
         return result;
+    }
+
+    @Cacheable(value = "gameDetails", unless = "#result == null")
+    public Game getGame(long appId) {
+        Map<String, AppDetailsEnvelope> response = storeClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/appdetails")
+                        .queryParam("appids", appId)
+                        .queryParam("cc", "DK")   // priser for Danmark (i euro)
+                        .queryParam("l", "english")
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, AppDetailsEnvelope>>() {});
+
+        if (response == null) return null;
+        AppDetailsEnvelope envelope = response.get(String.valueOf(appId));
+        if (envelope == null || !envelope.success() || envelope.data() == null) return null;
+
+        AppDetails details = envelope.data();
+        boolean isFree = Boolean.TRUE.equals(details.isFree());
+
+        Game game = new Game();
+        game.setAppId(appId);
+        game.setName(details.name());
+        game.setShortDescription(details.shortDescription());
+        game.setHeaderImage(details.headerImage());
+        game.setFree(isFree);
+
+        if (isFree) {
+            game.setPrice("Gratis");
+            game.setPriceInEuro(0.0);
+        } else if (details.priceOverview() != null) {
+            game.setPrice(details.priceOverview().finalFormatted());
+            game.setPriceInEuro(details.priceOverview().finalPrice() / 100.0);
+        } else {
+            game.setPrice("Ukendt pris");
+        }
+
+        game.setGenres(details.genres() == null ? Set.of()
+                : details.genres().stream().map(AppDetails.Tag::description).collect(Collectors.toSet()));
+        return game;
     }
 }

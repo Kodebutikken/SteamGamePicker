@@ -2,4 +2,4 @@ package com.kodebutikken.steamgamepicker.dto;
 
 import java.util.List;
 
-public record RecommendationResponse(List<GameRecommendation> recommendations) {}
+public record RecommendationResponse(List<RecommendedGame> recommendations) {}

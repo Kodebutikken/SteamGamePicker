@@ -31,7 +31,7 @@ public class SteamDtos {
             String type,
             String name,
             @JsonProperty("steam_appid") long appId,
-            @JsonProperty("is_free") boolean isFree,
+            @JsonProperty("is_free") Boolean isFree,
             @JsonProperty("short_description") String shortDescription,
             @JsonProperty("header_image") String headerImage,
             List<String> developers,
@@ -39,10 +39,13 @@ public class SteamDtos {
             List<AppDetails.Tag> genres,
             List<AppDetails.Tag> categories,
             @JsonProperty("release_date") AppDetails.ReleaseDate releaseDate,
-            AppDetails.Recommendations recommendations) {
+            AppDetails.Recommendations recommendations,
+            @JsonProperty("price_overview") AppDetails.PriceOverview priceOverview) {
         public record Tag(String id, String description) {}
         public record ReleaseDate(@JsonProperty("coming_soon") boolean comingSoon, String date) {}
         public record Recommendations(int total) {}
+        public record PriceOverview(@JsonProperty("final") int finalPrice,
+                                    @JsonProperty("final_formatted") String finalFormatted) {}
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

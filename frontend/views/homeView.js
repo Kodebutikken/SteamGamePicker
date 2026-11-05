@@ -11,9 +11,10 @@ export function createHomeView() {
         </div>
         <div id="messages"></div>
         <form id="chatForm">
-            <input id="messageInput" placeholder="F.eks. et co-op spil til under 10 euro..." autocomplete="off" required>
+            <input id="messageInput" placeholder="F.eks. et co-op spil jeg kan spille med en ven... (valgfrit)" autocomplete="off">
             <div class="composer-row">
                 <input id="steamId" placeholder="Steam64-ID, fx 7656119..." required>
+                <input id="maxPrice" type="number" min="0" step="0.01" placeholder="Maks pris i € (valgfri)">
                 <button type="submit">Send</button>
             </div>
         </form>
@@ -28,6 +29,7 @@ export function createHomeView() {
     const form = root.querySelector("#chatForm");
     const input = root.querySelector("#messageInput");
     const steamIdInput = root.querySelector("#steamId");
+    const maxPriceInput = root.querySelector("#maxPrice");
     const button = form.querySelector("button");
 
     root.querySelectorAll("[data-prompt]").forEach((suggestion) => {
@@ -38,7 +40,6 @@ export function createHomeView() {
     });
 
     requestAnimationFrame(() => input.focus());
-
 
     function scrollToBottom() {
         messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -53,23 +54,36 @@ export function createHomeView() {
         return div;
     }
 
-    function addGames(games) {
+    function addGames(recommendations) {
         const grid = document.createElement("div");
         grid.className = "games";
 
-        for (const g of games) {
+        for (const { game, reason } of recommendations) {
             const card = document.createElement("a");
             card.className = "game";
-            card.href = `https://store.steampowered.com/search/?term=${encodeURIComponent(g.title)}`;
+            card.href = `https://store.steampowered.com/app/${game.appId}`;
             card.target = "_blank";
             card.rel = "noopener";
 
-            const info = document.createElement("div");
-            const title = document.createElement("strong");
-            title.textContent = g.title;
-            info.append(title, g.genre ?? "", document.createElement("br"), g.reason ?? "");
+            const img = document.createElement("img");
+            img.src = game.headerImage;
+            img.alt = game.name;
 
-            card.append(info);
+            const info = document.createElement("div");
+
+            const title = document.createElement("strong");
+            title.textContent = game.name;
+
+            const meta = [game.price, ...(game.genres ?? []).slice(0, 2)].join(" · ");
+
+            const description = document.createElement("p");
+            description.textContent = game.shortDescription ?? "";
+
+            const why = document.createElement("p");
+            why.textContent = reason ?? "";
+
+            info.append(title, meta, description, why);
+            card.append(img, info);
             grid.appendChild(card);
         }
 
@@ -81,25 +95,29 @@ export function createHomeView() {
         event.preventDefault();
         const message = input.value.trim();
         const steamId = steamIdInput.value.trim();
-        if (!message || !steamId) return;
+        const maxPrice = maxPriceInput.value ? Number(maxPriceInput.value) : null;
+        if (!steamId) return;
         root.classList.remove("is-empty");
 
-        addMessage(message, "user");
+        addMessage(message || "Find nogle spil til mig", "user");
         input.value = "";
         button.disabled = true;
-        const loading = addMessage("Leder efter spil...", "bot loading");
+        const loading = addMessage(
+            "Leder efter spil... (første gang kan det tage et par minutter, mens Steam-kataloget hentes)",
+            "bot loading"
+        );
 
         try {
-            const data = await sendChat(steamId, message);
+            const data = await sendChat(steamId, message, maxPrice);
 
             loading.remove();
-            const games = data?.recommendations ?? [];
-            if (games.length === 0) {
-                addMessage("Jeg kunne ikke finde nogen spil. Tjek at dit Steam64-ID er rigtigt, "
-                    + "og at 'Game details' er sat til offentlig på din Steam-profil.", "bot");
+            const recommendations = data?.recommendations ?? [];
+            if (recommendations.length === 0) {
+                addMessage("Jeg kunne ikke finde nogen spil, der passer. Prøv en højere maks pris, "
+                    + "eller tjek at dit Steam64-ID er rigtigt og at 'Game details' er offentlig.", "bot");
             } else {
-                addMessage(`Her er ${games.length} spil, jeg tror du vil kunne lide:`, "bot");
-                addGames(games);
+                addMessage(`Her er ${recommendations.length} spil, du ikke ejer endnu:`, "bot");
+                addGames(recommendations);
             }
         } catch (error) {
             loading.remove();

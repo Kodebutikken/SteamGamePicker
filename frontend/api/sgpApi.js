@@ -36,7 +36,6 @@ async function request(endpoint, options = {}) {
 
         if (response.status === 204) return null;
 
-        // Nogle endpoints svarer med tom body (f.eks. 200 uden indhold)
         const text = await response.text();
         return text ? JSON.parse(text) : null;
     } catch (error) {
@@ -45,10 +44,10 @@ async function request(endpoint, options = {}) {
     }
 }
 
-export function sendChat(steamId, message) {
+export function sendChat(steamId, message, maxPrice) {
     return request("/recommendations", {
         method: "POST",
-        body: JSON.stringify({ steamId, query: message }),
+        body: JSON.stringify({ steamId, query: message, maxPrice }),
     });
 }
 

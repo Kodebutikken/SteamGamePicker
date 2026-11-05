@@ -20,6 +20,8 @@ public class Game {
     private String headerImage;
     private String releaseDate;
     private Integer recommendations;
+    private String price;
+    private Double priceInEuro;
 
     private Set<String> genres;
     private Set<String> categories;
