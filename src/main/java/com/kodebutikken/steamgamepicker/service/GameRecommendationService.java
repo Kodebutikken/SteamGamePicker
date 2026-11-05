@@ -1,6 +1,6 @@
 package com.kodebutikken.steamgamepicker.service;
 
-import com.kodebutikken.steamgamepicker.dto.SteamDtos;
+import com.kodebutikken.steamgamepicker.dto.RecommendationResponse;
 import com.kodebutikken.steamgamepicker.model.OwnedGame;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ public class GameRecommendationService {
 
     public GameRecommendationService(ChatClient.Builder chatClientBuilder, SteamClient steamClient) {
         this.chatClient = chatClientBuilder
-                .defaultSystem("You are an expert in video games. Analyze the users Steam library "
+                .defaultSystem("You are an expert in video games. Analyze the users Steam library. "
                         + "Recommend three games that are available on Steam. "
                         + "You may NOT recommend games the user already owns. "
                         + "Take the users request into account if there is one. "
@@ -37,7 +37,7 @@ public class GameRecommendationService {
         String gamesContext = ownedGames.stream()
                 .sorted(Comparator.comparingInt(OwnedGame::playtimeForever).reversed())
                 .limit(100)
-                .map(g -> "- " + g.name() + " (" + g.playtimeForever() + " hours)")
+                .map(g -> "- " + g.name() + " (" + g.getPlaytimeHours() + " hours)")
                 .collect(Collectors.joining("\n"));
 
         String query = (userQuery == null || userQuery.isBlank()) ? "No special request" : userQuery.strip();
@@ -54,8 +54,4 @@ public class GameRecommendationService {
                 .call()
                 .entity(RecommendationResponse.class, spec -> spec.useProviderStructuredOutput());
     }
-
-    public record RecommendationRequest(String steamId, String query) {}
-    public record GameRecommendation(String title, String genre, String reason) {}
-    public record RecommendationResponse(List<GameRecommendation> recommendations) {}
 }

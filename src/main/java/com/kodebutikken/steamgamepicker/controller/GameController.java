@@ -1,14 +1,13 @@
 package com.kodebutikken.steamgamepicker.controller;
 
+import com.kodebutikken.steamgamepicker.dto.RecommendationRequest;
+import com.kodebutikken.steamgamepicker.dto.RecommendationResponse;
 import com.kodebutikken.steamgamepicker.dto.SteamDtos;
 import com.kodebutikken.steamgamepicker.model.OwnedGame;
 import com.kodebutikken.steamgamepicker.service.GameRecommendationService;
 import com.kodebutikken.steamgamepicker.service.SteamClient;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -34,9 +33,7 @@ public class GameController {
     }
 
     @PostMapping("/api/recommendations")
-    public ResponseEntity<GameRecommendationService.RecommendationResponse> recommend(
-            @RequestBody GameRecommendationService.RecommendationRequest request) {
-
+    public ResponseEntity<RecommendationResponse> recommend(@RequestBody RecommendationRequest request) {
         if (request.steamId() == null || request.steamId().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
@@ -44,4 +41,3 @@ public class GameController {
                 recommendationService.getRecommendations(request.steamId(), request.query()));
     }
 }
-
